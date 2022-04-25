@@ -11,6 +11,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -36,6 +37,9 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        ScoreText.text = $"{DataPersistence.Instance.playerName} - Score : {m_Points}";
+        SetHighScoreText();
     }
 
     private void Update()
@@ -65,12 +69,45 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $"{DataPersistence.Instance.playerName} - Score : {m_Points}";
+    }
+
+    private static bool HasReachedNewHighScore(int score)
+    {
+        return score > DataPersistence.Instance.highScoreData.score;
+    }
+
+    private void SetHighScore(int score)
+    {
+        DataPersistence.Instance.highScoreData = new HighScoreData()
+        {
+            name = DataPersistence.Instance.playerName,
+            score = score,
+        };
+        
+        DataPersistence.Instance.SavePersistentData();
+    }
+
+    private void SetHighScoreText()
+    {
+        if (DataPersistence.Instance.highScoreData.IsEmpty())
+        {
+            BestScoreText.text = "No high score!";
+            return;
+        }
+
+        BestScoreText.text = $"Best Score: {DataPersistence.Instance.highScoreData.name} : Score : {DataPersistence.Instance.highScoreData.score}";
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        
+        if (HasReachedNewHighScore(m_Points))
+        {
+            SetHighScore(m_Points);
+            SetHighScoreText();
+        }
     }
 }
